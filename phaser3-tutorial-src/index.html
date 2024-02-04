@@ -30,6 +30,22 @@
         },
       };
 
+      let platforms;
+      let cursors;
+      let stars;
+      let score = 0;
+      let scoreText;
+      let pausedText;
+      let bombs;
+      let restartButton;
+      let currentScene;
+      let enterKey;
+      let pauseKey;
+      let gameOver = false;
+      let isPaused = false;
+      let currentHighScore = localStorage.getItem("highestScore");
+      console.log(currentHighScore);
+      let highestScoreText;
       let game = new Phaser.Game(config);
 
       function preload() {
@@ -43,22 +59,12 @@
         });
       }
 
-      let platforms;
-      let cursors;
-      let stars;
-      let score = 0;
-      let scoreText;
-      let pausedText;
-      let bombs;
-      let restartButton;
-      let currentScene;
-      let pauseKey;
-      let gameOver = false;
-      let isPaused = false;
-
       function create() {
         currentScene = this;
         cursors = this.input.keyboard.createCursorKeys();
+        enterKey = this.input.keyboard.addKey(
+          Phaser.Input.Keyboard.KeyCodes.ENTER
+        );
 
         this.add.image(400, 300, "sky");
 
@@ -124,6 +130,17 @@
           fill: "#000",
         });
 
+        // Display the highest score
+        highestScoreText = this.add.text(
+          500,
+          16,
+          "Highest: " + currentHighScore,
+          {
+            fontSize: "32px",
+            fill: "#000",
+          }
+        );
+
         pauseKey = this.input.keyboard.addKey(
           Phaser.Input.Keyboard.KeyCodes.SHIFT
         );
@@ -154,6 +171,9 @@
           if (Phaser.Input.Keyboard.JustDown(pauseKey)) {
             togglePause();
           }
+        }
+        if (Phaser.Input.Keyboard.JustDown(enterKey)) {
+          restartGame();
         }
       }
 
@@ -197,6 +217,15 @@
         // Add keydown event listener for 'R' key
         this.input.keyboard.on("keydown-R", restartGame);
 
+        // Check and update highest score
+        if (score > currentHighScore) {
+          currentHighScore = score;
+          // Save the highest score to localStorage
+          localStorage.setItem("highestScore", currentHighScore.toString());
+          // Update the displayed highest score
+          highestScoreText.setText("Highest: " + currentHighScore);
+        }
+
         gameOver = true;
       }
 
@@ -209,12 +238,6 @@
         // Remove the button
         restartButton.destroy();
 
-        // Resume physics
-        currentScene.physics.resume();
-
-        // Clear existing bombs
-        bombs.clear(true, true);
-
         // Reset player position
         player.setTint(0xffffff); // Reset player tint
         player.setPosition(100, 450);
@@ -223,6 +246,9 @@
         stars.children.iterate(function (child) {
           child.enableBody(true, child.x, 0, true, true);
         });
+
+        // Clear existing bombs
+        bombs.clear(true, true);
 
         // Create a new bomb
         let x =
@@ -233,6 +259,9 @@
         bomb.setBounce(1);
         bomb.setCollideWorldBounds(true);
         bomb.setVelocity(Phaser.Math.Between(-200, 200), 20);
+
+        // Resume physics (move this line to the end)
+        currentScene.physics.resume();
       }
 
       function initializeGame() {
